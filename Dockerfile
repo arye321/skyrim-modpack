@@ -1,19 +1,22 @@
 # Dockerfile for building Enchantment Indicator Mod
-# This provides a containerized build environment that doesn't require
-# Windows or Skyrim tools to be installed locally
+# Linux-based build environment for cross-platform compilation
 
-FROM mcr.microsoft.com/windows/servercore:ltsc2022
+FROM ubuntu:22.04
 
 LABEL maintainer="Skyrim Modding Community"
 LABEL description="Build environment for Enchantment Indicator Mod"
 
-# Install PowerShell
-RUN powershell -Command \
-    $ProgressPreference = 'SilentlyContinue'; \
-    Invoke-WebRequest -Uri https://github.com/PowerShell/PowerShell/releases/download/v7.4.0/PowerShell-7.4.0-win-x64.msi \
-    -OutFile PowerShell-7.4.0-win-x64.msi; \
-    msiexec /i PowerShell-7.4.0-win-x64.msi /quiet; \
-    Remove-Item PowerShell-7.4.0-win-x64.msi -Force
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    bash \
+    curl \
+    wget \
+    ca-certificates \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
@@ -22,7 +25,7 @@ WORKDIR /build
 COPY . .
 
 # Create output directory
-RUN mkdir build_output
+RUN mkdir -p build_output
 
-# Run build script
-CMD ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "build.ps1"]
+# Run build script with Linux mode
+CMD ["bash", "build.sh", "--linux"]

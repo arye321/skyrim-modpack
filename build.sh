@@ -109,7 +109,7 @@ build_docker() {
     fi
     
     print_info "Building Docker image..."
-    docker build -t "$MOD_NAME:latest" .
+    docker build -t "enchantment-indicator:latest" .
     
     print_info "Running build in container..."
     mkdir -p build_output
@@ -118,7 +118,7 @@ build_docker() {
         -v "$(pwd)/build_output:/build/build_output" \
         -v "$(pwd)/source:/build/source" \
         -v "$(pwd)/docs:/build/docs" \
-        "$MOD_NAME:latest"
+        "enchantment-indicator:latest"
     
     print_success "Build complete"
     print_info "Output: $BUILD_DIR/"
@@ -137,6 +137,34 @@ build_powershell() {
     
     print_info "Running build script..."
     pwsh -NoProfile -ExecutionPolicy Bypass -File ./build.ps1
+    
+    echo ""
+}
+
+# Build using Linux (validates and stages source files)
+build_linux() {
+    print_header "Building on Linux"
+    
+    print_info "Validating source files..."
+    validate_sources || return 1
+    
+    print_info "Staging source files..."
+    mkdir -p "$MOD_OUTPUT/Scripts"
+    mkdir -p "$MOD_OUTPUT/UI"
+    mkdir -p "$MOD_OUTPUT/SKSE/Plugins"
+    
+    # Copy Papyrus source scripts
+    cp source/scripts/*.psc "$MOD_OUTPUT/Scripts/" 2>/dev/null || true
+    
+    # Copy ActionScript source files
+    cp source/ui/skyui_custom/*.as "$MOD_OUTPUT/UI/" 2>/dev/null || true
+    
+    # Copy SKSE source
+    cp source/skse/*.cpp "$MOD_OUTPUT/SKSE/" 2>/dev/null || true
+    
+    print_success "Source files staged"
+    print_info "Note: Full compilation (Papyrus → .pex, ActionScript → .swf) requires Windows/PowerShell or macOS"
+    print_info "For real compilation, run on Windows: .\\build.ps1 or .\\build.bat"
     
     echo ""
 }
@@ -189,8 +217,9 @@ Usage: $0 [OPTIONS]
 Options:
     -h, --help           Show this help message
     -c, --check          Check tools and validate sources
-    -d, --docker         Build using Docker (recommended)
-    -p, --powershell     Build using PowerShell
+    -d, --docker         Build using Docker
+    -p, --powershell     Build using PowerShell (Windows/WSL)
+    -l, --linux          Build on Linux (source staging only)
     -v, --validate       Validate source files only
     -c, --clean          Clean build output
     -i, --info           Show project information
@@ -227,6 +256,11 @@ parse_args() {
             -p|--powershell)
                 validate_sources || exit 1
                 build_powershell
+                setup_output
+                exit $?
+                ;;
+            -l|--linux)
+                build_linux
                 setup_output
                 exit $?
                 ;;
@@ -290,13 +324,8 @@ main() {
             print_info "PowerShell detected - using PowerShell build"
             parse_args --powershell
         else
-            print_error "No suitable build environment found"
-            echo ""
-            print_info "Options:"
-            echo "  1. Install Docker: https://www.docker.com/"
-            echo "  2. Install PowerShell: https://github.com/PowerShell/PowerShell"
-            echo "  3. Run on Windows with build.bat or build.ps1"
-            exit 1
+            print_info "Using Linux build (source staging mode)"
+            parse_args --linux
         fi
     else
         parse_args "$@"
