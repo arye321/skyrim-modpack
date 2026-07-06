@@ -35,10 +35,4 @@ $actionScriptSources = @(
 # Papyrus compiler flags
 $papyrusFlags = "TESV_Papyrus_Flags.flg"
 
-# Export these for use in build scripts
-Export-ModuleMember -Variable @(
-    'skyrimPath', 'ckPath', 'papyrusCompiler', 'skseSdkPath', 'vsPath',
-    'modName', 'modVersion', 'buildOutput', 'modOutput',
-    'mtxcPath', 'flexSdkPath', 'msbuildPath',
-    'scriptSources', 'actionScriptSources', 'papyrusFlags'
-)
+# Variables are dot-sourced by the build scripts and remain available in the caller scope.

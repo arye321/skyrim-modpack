@@ -43,10 +43,10 @@ function Write-Status {
     }[$Type]
     
     $prefix = @{
-        "Success" = "[✓]"
-        "Error"   = "[✗]"
-        "Warning" = "[!]"
-        "Info"    = "[*]"
+        "Success" = "[OK]"
+        "Error"   = "[ERR]"
+        "Warning" = "[WARN]"
+        "Info"    = "[INFO]"
     }[$Type]
     
     Write-Host "$prefix $Message" -ForegroundColor $color
